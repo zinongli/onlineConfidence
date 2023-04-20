@@ -21,17 +21,20 @@
 % 28: hit rate
 % 29: error orthogonal to the reach direction (vector rejection) in mm
 %%
-participant = 0;
-if participant == 1
-    load('JM_practice_traj_S1_06-Apr-2023_tform.mat')
-    load('JM_practice_traj_S1c_06-Apr-2023_rawtotal.mat')
-    load('JM_practice_traj_S1c_06-Apr-2023_traXtotal.mat')
-    load('JM_practice_traj_S1c_06-Apr-2023_traYtotal.mat')
-elseif participant == 0
-    load('pilot_practice_traj_S1_31-Mar-2023_tform.mat')
-    load('rawComplete.mat')
-    load('xTrajComplete.mat')
-    load('yTrajComplete.mat')
+subj = 'ZL';
+
+if subj == 'JX'
+    load(['data_onlineConf\' subj '\' 'JM_practice_traj_S1_06-Apr-2023_tform.mat'])
+    load(['data_onlineConf\' subj '\' 'JM_practice_traj_S1c_06-Apr-2023_rawtotal.mat'])
+    load(['data_onlineConf\' subj '\' 'JM_practice_traj_S1c_06-Apr-2023_traXtotal.mat'])
+    load(['data_onlineConf\' subj '\' 'JM_practice_traj_S1c_06-Apr-2023_traYtotal.mat'])
+    load(['data_onlineConf\' subj '\' 'JX_MaxSpeed.mat'])
+elseif subj == 'ZL'
+    load(['data_onlineConf\' subj '\' 'pilot_practice_traj_S1_31-Mar-2023_tform.mat'])
+    load(['data_onlineConf\' subj '\' 'rawComplete.mat'])
+    load(['data_onlineConf\' subj '\' 'xTrajComplete.mat'])
+    load(['data_onlineConf\' subj '\' 'yTrajComplete.mat'])
+    load(['data_onlineConf\' subj '\' 'ZL_MaxSpeed.mat'])
 end
 
 index = NaN(length(data),1);
@@ -42,6 +45,9 @@ valid = data(index==true,:);
 validTraX = traXtotal(index==true,:);
 validTraY = traYtotal(index==true,:);
 
+Affine2d =tform.T(1:2,1:2);
+[~,s,~] = svd(Affine2d);
+proj2tablet = 1./mean([s(1,1),s(2,2)]);
 pixellength = 0.248;
 copy = valid;
 copy(:,[1,2]) = transformPointsInverse(tform,copy(:,[1,2]));
@@ -49,7 +55,7 @@ copy(:,[8,9]) = transformPointsInverse(tform,copy(:,[8,9]));
 copy(:,10) = sqrt(sum((copy(:,1:2) - copy(:,8:9)).^2,2)) .* pixellength;
 copy(:,[11,12]) = [copy(:,1)*pixellength (1080 - copy(:,2))*pixellength];
 copy(:,[13,14]) = [copy(:,6)*pixellength (1080 - copy(:,7))*pixellength]; % 1080 = tablet pixel height
-copy(:,15) = valid(:,10) .* pixellength .* 1.8919 ./ 2; % 1.8919 = projetor size to tablet size (physical size), /2 is diameter vs radius
+copy(:,15) = valid(:,10) .* pixellength .* proj2tablet ./ 2; % proj2tablet = projetor size to tablet size (physical size), /2 is diameter vs radius
 copy(:,16) = copy(:,5) - copy(:,4);
 copy(:,17) = sqrt( (copy(:,13)-copy(:,11)).^2 + (copy(:,14)-copy(:,12)).^2 );
 copy(:,27) = 1:length(copy);

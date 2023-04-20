@@ -20,7 +20,7 @@ d = SAparams(4);
 e = SAparams(5);
 f = SAparams(6);
 
-distance = 90:10:350; %mm
+distance = 90:10:370; %mm
 penalty = 0.2; % secs
 target = 2:0.1:6; %mm
 %%
@@ -95,10 +95,10 @@ xlabel('target size')
 ylabel('distance')
 zlabel('scale')
 title('The magnification scale required for switching to be equally desirable')
-%%
-figure
-surf(target,distance,opt_speed')
-xlabel('target size')
-ylabel('distance')
-zlabel('speed')
-title('Optimal Max Speed')
+% %%
+% figure
+% surf(target,distance,opt_speed')
+% xlabel('target size')
+% ylabel('distance')
+% zlabel('speed')
+% title('Optimal Max Speed')

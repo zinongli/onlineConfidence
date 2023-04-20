@@ -20,11 +20,16 @@ else
     save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_tform.mat'],'tform')
     save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_calibration.mat'],'calibration')
 end
+
+load(['data_onlineConf\' subj '\' subj '_alt_scale.mat'])
 mode = 0; % lift = 1, slide = 0
 %%
 start_size = 20;
 cursor_size = 5;
 pixellength = 0.248;
+Affine2d =tform.T(1:2,1:2);
+[~,s,~] = svd(Affine2d);
+proj2tablet = 1./mean([s(1,1),s(2,2)]);
 wait = 1;
 patience = 0.5;
 topBuff = [0 0 displayInfo.screenXpixels displayInfo.screenAdj/2]; %black bar at top of screen
@@ -131,7 +136,8 @@ for j = 1:gap_n
                     params(i,1:2) = startpos + offset;
                 end
                 params(i,10) = randsizes(i);
-                distanceLookUpI = round(rho/10)-8;
+                physicalRho = rho * pixellength * proj2tablet;
+                distanceLookUpI = round(physicalRho/10)-8;
                 targetLookUpI = round(params(i,10)*pixellength/0.1) - 19;
                 switch_scale = alt_scale(targetLookUpI,distanceLookUpI);
                 switch_size = switch_scale * params(i,10);
