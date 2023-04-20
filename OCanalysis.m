@@ -21,7 +21,7 @@
 % 28: hit rate
 % 29: error orthogonal to the reach direction (vector rejection) in mm
 %%
-participant = 1;
+participant = 0;
 if participant == 1
     load('JM_practice_traj_S1_06-Apr-2023_tform.mat')
     load('JM_practice_traj_S1c_06-Apr-2023_rawtotal.mat')
