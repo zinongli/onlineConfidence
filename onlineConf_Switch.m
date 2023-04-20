@@ -137,9 +137,13 @@ for j = 1:gap_n
                 end
                 params(i,10) = randsizes(i);
                 physicalRho = rho * pixellength * proj2tablet;
+                physicalSize = params(i,10) * pixellength * proj2tablet;
                 distanceLookUpI = round(physicalRho/10)-8;
-                targetLookUpI = round(params(i,10)*pixellength/0.1) - 19;
+                targetLookUpI = round(physicalSize/0.1) - 19;
                 switch_scale = alt_scale(targetLookUpI,distanceLookUpI);
+                if isnan(switch_scale)
+                    switch_scale = 5;
+                end
                 switch_size = switch_scale * params(i,10);
                 Screen('DrawDots', displayInfo.window, startpos, start_size, [1 1 1],[],1);
                 [xy(1), xy(2)]  = transformPointsForward(tform,x,y);
