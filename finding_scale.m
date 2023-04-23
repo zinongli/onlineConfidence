@@ -2,14 +2,14 @@ totalTime = 3; % secs
 speedRange = [100 1600];
 
 
-participant = 0;
+participant = 1;
 if participant == 1 % JX
     SAparams = [0.00744, 10.9, 0.00570, 3.41, 0.465, 72.52];
 elseif participant == 0 % ZL
-    SAparams = [0.00432, 6.61, 0.00423, 1.74, 0.480, 65.71];
+    SAparams = [0.00432, 6.61, 0.00423, 1.74, 0.480, 65.71]; %group_n = 20
 end
 
-speedResolution = 2000;
+speedResolution = 1000;
 speeds = linspace(speedRange(1),speedRange(2),speedResolution);
 
 tSizeScale = 2;
@@ -20,9 +20,9 @@ d = SAparams(4);
 e = SAparams(5);
 f = SAparams(6);
 
-distance = 90:10:370; %mm
-penalty = 0.2; % secs
-target = 2:0.1:6; %mm
+distance = 90:20:370; %mm
+penalty = 0.001; % secs
+target = 2:1:10; %mm
 %%
 points1 = NaN(length(target),length(distance),length(speeds));
 points2 = NaN(length(target),length(distance),length(speeds));

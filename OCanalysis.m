@@ -234,26 +234,48 @@ mld = fitlm(speedPoint,stds)
 %% max speed order, fixed group size, along
 [sortedMaxSpeed,ind] = sort(maxSpeed);
 maxSpeedSortedTrials = copy(ind,:);
-group_n = 20;
-stds = NaN(1,group_n);
-hitrate = NaN(1,group_n);
-means = NaN(1,group_n);
-speedStd = NaN(1,group_n);
-speedPoint = NaN(1,group_n);
-groupSize = length(copy)/group_n;
-for i = 1:group_n
-    stds(i) = std(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,23));
-    speedPoint(i) = mean(sortedMaxSpeed(i*groupSize-groupSize+1:i*groupSize));
-    hitrate(i) = sum(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,28));
-    means(i) = mean(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,23));
-    speedStd(i) = std(sortedMaxSpeed(i*groupSize-groupSize+1:i*groupSize));
+group_ns = [6,8,9,10,12,15,18,20,24,30,36,40];
+interceptFits = NaN(1,length(group_ns));
+slopeFits = NaN(1,length(group_ns));
+rSquareds = NaN(1,length(group_ns));
+for j = 1:length(group_ns)
+    
+    group_n = group_ns(j);
+    stds = NaN(1,group_n);
+    hitrate = NaN(1,group_n);
+    means = NaN(1,group_n);
+    speedStd = NaN(1,group_n);
+    speedPoint = NaN(1,group_n);
+    groupSize = length(copy)/group_n;
+    for i = 1:group_n
+        stds(i) = std(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,23));
+        speedPoint(i) = mean(sortedMaxSpeed(i*groupSize-groupSize+1:i*groupSize));
+        hitrate(i) = sum(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,28));
+        means(i) = mean(maxSpeedSortedTrials(i*groupSize-groupSize+1:i*groupSize,23));
+        speedStd(i) = std(sortedMaxSpeed(i*groupSize-groupSize+1:i*groupSize));
+    end
+    mld = fitlm(speedPoint,stds);
+    interceptFits(j) = table2array(mld.Coefficients(1,1));
+    slopeFits(j) = table2array(mld.Coefficients(2,1));
+    rSquareds(j) = mld.Rsquared.Adjusted;
+    LLH(j) = mld.LogLikelihood;
 end
+
 figure
-errorbar(speedPoint,stds,speedStd,'horizontal','o')
-xlabel('Max Speed (mm/s)')
-ylabel('Standard Error (mm)')
-title('Max Speed vs Error')
-mld = fitlm(speedPoint,stds)
+plot(slopeFits,'-o')
+
+plot(interceptFits,'-o')
+
+plot(rSquareds,'-o')
+% plot(LLH,'-o')
+legend('slope','intercept','Rsquared','LogLikelihood')
+hold off
+% figure
+% errorbar(speedPoint,stds,speedStd,'horizontal','o')
+% xlabel('Max Speed (mm/s)')
+% ylabel('Standard Error (mm)')
+% title('Max Speed vs Error')
+% mld = fitlm(speedPoint,stds)
 
 %% max speed order, fixed group size, ortho
 [sortedMaxSpeed,ind] = sort(maxSpeed);

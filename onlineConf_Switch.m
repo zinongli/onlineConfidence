@@ -1,6 +1,6 @@
 % clear all
 Screen('Preference', 'SkipSyncTests', 1); 
-cd('C:\Users\labadmin\Documents\onlineConfExperiment');
+cd('C:\Users\labadmin\Documents\ZinongGitHub\onlineConfidence');
 
 subj = 'ZL';  
 dateTime = clock;                %get  s time for seed  
@@ -40,17 +40,17 @@ bottomBuff = [0 displayInfo.screenYpixels-displayInfo.screenAdj/2 displayInfo.sc
 dists_n = 3;
 UniRandRadius = 50;
 edgesize = 50;
-
+sizes_n = 5;
 
 rep = 2;
-distances = linspace(edgesize,displayInfo.windowRect(3)-edgesize,dists_n+2)-edgesize;
-distances = repmat(distances(2:end-1),1,length(hitrates)*rep);
+distances = linspace(edgesize,displayInfo.windowRect(3)-edgesize,dists_n+2)-edgesize+4;
+distances = repmat(distances(2:end-1),1,sizes_n*rep);
 scorebar_length = 200;
 penalty = 0.2;
 
 % mmsigma = [15]; % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! needs to be extraced from previous data
 % target_sizes = tSizeGen(mmsigma,hitrates,pixellength);
-target_sizes = [3;3.5;4;4.5;5] ./ pixellength;
+target_sizes = [3;3.5;4;4.5;5] ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';
 target_sizes = target_sizes(:)';
@@ -223,9 +223,10 @@ for j = 1:gap_n
                             onset_recorded = 1;
                         end
                         [keyIsDown,~,keyCode] = KbCheck;
-                        if find(keyCode) == 229
-                            switch_time = frame / framrate;
+                        if ismember(161,find(keyCode))
+                            switch_time = frame / framerate;
                             switch_recorded = 1;
+                            tSize = switch_size;
                         end
                         if (locdiff <= speedthreshold/framerate && ~mode) || (buttons(1) && mode)
                             if norm(xy - startpos) < randdists(i)/2
