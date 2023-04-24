@@ -21,7 +21,7 @@
 % 28: hit rate
 % 29: error orthogonal to the reach direction (vector rejection) in mm
 %%
-subj = 'ZL';
+subj = 'JX';
 
 if subj == 'JX'
     load(['data_onlineConf/' subj '/' 'JM_practice_traj_S1_06-Apr-2023_tform.mat'])
@@ -238,6 +238,7 @@ group_ns = [6,8,9,10,12,15,18,20,24,30,36,40];
 interceptFits = NaN(1,length(group_ns));
 slopeFits = NaN(1,length(group_ns));
 rSquareds = NaN(1,length(group_ns));
+LLH = NaN(1,length(group_ns));
 for j = 1:length(group_ns)
     
     group_n = group_ns(j);
@@ -263,20 +264,35 @@ end
 
 figure
 plot(slopeFits,'-o')
-
+ylabel('Slope')
+xlabel('Group Size')
+xticks(1:length(group_ns))
+xticklabels(group_ns)
+title('Slope vs Group Size')
+figure
 plot(interceptFits,'-o')
-
+ylabel('Intercept')
+xlabel('Group Size')
+xticks(1:length(group_ns))
+xticklabels(group_ns)
+title('Intercept vs Group Size')
+figure
 plot(rSquareds,'-o')
-% plot(LLH,'-o')
-legend('slope','intercept','Rsquared','LogLikelihood')
-hold off
+ylabel('R Sqaured')
+xlabel('Group Size')
+xticks(1:length(group_ns))
+xticklabels(group_ns)
+title('R Sqaured vs Group Size')
+
 % figure
 % errorbar(speedPoint,stds,speedStd,'horizontal','o')
 % xlabel('Max Speed (mm/s)')
 % ylabel('Standard Error (mm)')
 % title('Max Speed vs Error')
 % mld = fitlm(speedPoint,stds)
-
+% hold on
+% plot(200:1600,(200:1600)*table2array(mld.Coefficients(2,1))+table2array(mld.Coefficients(1,1)),'--')
+% hold off
 %% max speed order, fixed group size, ortho
 [sortedMaxSpeed,ind] = sort(maxSpeed);
 maxSpeedSortedTrials = copy(ind,:);
@@ -298,9 +314,11 @@ figure
 errorbar(speedPoint,stds,speedStd,'horizontal','o')
 xlabel('Max Speed (mm/s)')
 ylabel('Standard Error (mm)')
-title('Max Speed vs Error')
+title('Max Speed vs Lateral Error')
 mld = fitlm(speedPoint,stds)
-
+hold on
+plot(200:1600,(200:1600)*table2array(mld.Coefficients(2,1))+table2array(mld.Coefficients(1,1)),'--')
+hold off
 %%
 plot(maxSpeed,copy(:,22),'o')
 

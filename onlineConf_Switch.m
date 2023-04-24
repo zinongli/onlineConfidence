@@ -43,7 +43,7 @@ edgesize = 50;
 sizes_n = 5;
 
 rep = 2;
-distances = linspace(edgesize,displayInfo.windowRect(3)-edgesize,dists_n+2)-edgesize+4;
+distances = linspace(edgesize,displayInfo.windowRect(3)-edgesize,dists_n+2)-edgesize;
 distances = repmat(distances(2:end-1),1,sizes_n*rep);
 scorebar_length = 200;
 penalty = 0.2;
@@ -138,7 +138,7 @@ for j = 1:gap_n
                 params(i,10) = randsizes(i);
                 physicalRho = rho * pixellength * proj2tablet;
                 physicalSize = params(i,10) * pixellength * proj2tablet;
-                distanceLookUpI = round(physicalRho/10)-8;
+                distanceLookUpI = round(physicalRho/10)-7;
                 targetLookUpI = round(physicalSize/0.1) - 19;
                 switch_scale = alt_scale(targetLookUpI,distanceLookUpI);
                 if isnan(switch_scale)
