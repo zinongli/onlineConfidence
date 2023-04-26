@@ -69,8 +69,13 @@ copy(:,28) = copy(:,26) ~= 0;
 endPoints = (copy(:,6:7) - copy(:,8:9)) .* pixellength;% relative endpoint coordinate
 projScale = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,24:25),2)));
 rejections = endPoints - projScale.* copy(:,24:25);
+tooLeft = NaN(1,length(copy));
+for i = 1:length(copy)
+    tooLeft(i) = sum(cross([endPoints(i,:),0],[rejections(i,:),0])>0); 
+end
+tooLeft(tooLeft==0) = -1;
 rejLength = sqrt(rejections(:,1).^2 + rejections(:,2).^2);
-copy(:,29) = rejLength;
+copy(:,29) = rejLength .* tooLeft';
 copy([1:60 181:240],3) = 3;
 copy([61:120 241:300],3) = 2;
 copy([121:180 301:360],3) = 1;
