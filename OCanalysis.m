@@ -71,7 +71,7 @@ projScale = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,
 rejections = endPoints - projScale.* copy(:,24:25);
 tooLeft = NaN(1,length(copy));
 for i = 1:length(copy)
-    tooLeft(i) = sum(cross([endPoints(i,:),0],[rejections(i,:),0])>0); 
+    tooLeft(i) = sum(cross([endPoints(i,:),0],[rejections(i,:),0])<0); 
 end
 tooLeft(tooLeft==0) = -1;
 rejLength = sqrt(rejections(:,1).^2 + rejections(:,2).^2);

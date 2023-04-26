@@ -45,7 +45,6 @@ for tt = 1:length(target) %loop over all target sizes
             errory = speeds(ss) * c + d;
             probHit1 = compute_phit2(target1,errorx,errory);
             probHit2 = compute_phit2(target2,errorx,errory);
-            
             points1(tt,dd,ss) = remainScore * probHit1;
             points2(tt,dd,ss) = remainScoreSwitch * probHit2;
         end
