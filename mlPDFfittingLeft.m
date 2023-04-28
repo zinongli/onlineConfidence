@@ -1,6 +1,6 @@
 function pdf = mlPDFfittingLeft(x,a,b,c,d)
-load('yLeftSampleSpeed,mat','leftward')
-mu = a .* leftward + b;
-sigma = c .* leftward + d;
+load('yLeftSampleSpeed,mat','leftwardSample')
+mu = a .* leftwardSample + b;
+sigma = c .* leftwardSample + d;
 pdf = normpdf(x,mu,sigma);
 end
