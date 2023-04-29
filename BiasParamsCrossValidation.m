@@ -34,7 +34,7 @@ for i = 1:test_n
     xTotalTest = xTotal(~xTotalSampleBin);
     maxSpeedSample = maxSpeed(xTotalSampleBin);
     maxSpeedTest = maxSpeed(~xTotalSampleBin);
-    save('xTotalSampleSpeed,mat','maxSpeedSample')
+    save('xTotalSampleSpeed.mat','maxSpeedSample')
 
     xRightSampleBin = zeros(1,length(xRight));
     xRightSampleBin(randsample(length(xRight),round(length(xRight)*sampleRatio))) = 1;
@@ -43,7 +43,7 @@ for i = 1:test_n
     xRightTest = xRight(~xRightSampleBin);
     rightwardSample = rightward(xRightSampleBin);
     rightwardTest = rightward(~xRightSampleBin);
-    save('xRightSampleSpeed,mat','rightwardSample')
+    save('xRightSampleSpeed.mat','rightwardSample')
 
     xLeftSampleBin = zeros(1,length(xLeft));
     xLeftSampleBin(randsample(length(xLeft),round(length(xLeft)*sampleRatio))) = 1;
@@ -52,14 +52,14 @@ for i = 1:test_n
     xLeftTest = xLeft(~xLeftSampleBin);
     leftwardSample = leftward(xLeftSampleBin);
     leftwardTest = leftward(~xLeftSampleBin);
-    save('xLeftSampleSpeed,mat','leftwardSample')
+    save('xLeftSampleSpeed.mat','leftwardSample')
 
     xParams = NaN(3,2);
-    [phat,~] = mle(xTotalSample,'pdf',@(xTotalSample,a,b,c,d) mlPDFfittingTotal(xTotalSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(xTotalSample,'pdf',@(xTotalSample,a,b,c,d) xMLEfittingTotal(xTotalSample,a,b,c,d),'Start',[0,0,0,5]);
     xParams(1,:) = phat(1:2);
-    [phat,~] = mle(xRightSample,'pdf',@(xRightSample,a,b,c,d) mlPDFfittingRight(xRightSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(xRightSample,'pdf',@(xRightSample,a,b,c,d) xMLEfittingRight(xRightSample,a,b,c,d),'Start',[0,0,0,5]);
     xParams(2,:) = phat(1:2);
-    [phat,~] = mle(xLeftSample,'pdf',@(xLeftSample,a,b,c,d) mlPDFfittingLeft(xLeftSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(xLeftSample,'pdf',@(xLeftSample,a,b,c,d) xMLEfittingLeft(xLeftSample,a,b,c,d),'Start',[0,0,0,5]);
     xParams(3,:) = phat(1:2);
 
     x4TotalMSE(i) = sum((xTotalTest - (xParams(1,1) .* maxSpeedTest + xParams(1,2))).^2) ./ length(maxSpeedTest);
@@ -107,7 +107,7 @@ y6LateralMSE = NaN(1,test_n);
 y7LateralMSE = NaN(1,test_n);
 y8LateralMSE = NaN(1,test_n);
 y9LateralMSE = NaN(1,test_n);
-fprintf('Orthogonal MSE Progress:    ');
+
 for i = 1:test_n
     yTotalSampleBin = zeros(1,length(yTotal));
     yTotalSampleBin(randsample(length(yTotal),round(length(yTotal)*sampleRatio))) = 1;
@@ -116,7 +116,7 @@ for i = 1:test_n
     yTotalTest = yTotal(~yTotalSampleBin);
     maxSpeedSample = maxSpeed(yTotalSampleBin);
     maxSpeedTest = maxSpeed(~yTotalSampleBin);
-    save('yTotalSampleSpeed,mat','maxSpeedSample')
+    save('yTotalSampleSpeed.mat','maxSpeedSample')
 
     yRightSampleBin = zeros(1,length(yRight));
     yRightSampleBin(randsample(length(yRight),round(length(yRight)*sampleRatio))) = 1;
@@ -125,7 +125,7 @@ for i = 1:test_n
     yRightTest = yRight(~yRightSampleBin);
     rightwardSample = rightward(yRightSampleBin);
     rightwardTest = rightward(~yRightSampleBin);
-    save('yRightSampleSpeed,mat','rightwardSample')
+    save('yRightSampleSpeed.mat','rightwardSample')
 
     yLeftSampleBin = zeros(1,length(yLeft));
     yLeftSampleBin(randsample(length(yLeft),round(length(yLeft)*sampleRatio))) = 1;
@@ -134,14 +134,14 @@ for i = 1:test_n
     yLeftTest = yLeft(~yLeftSampleBin);
     leftwardSample = leftward(yLeftSampleBin);
     leftwardTest = leftward(~yLeftSampleBin);
-    save('yLeftSampleSpeed,mat','leftwardSample')
+    save('yLeftSampleSpeed.mat','leftwardSample')
 
     yParams = NaN(3,2);
-    [phat,~] = mle(yTotalSample,'pdf',@(yTotalSample,a,b,c,d) mlPDFfittingTotal(yTotalSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(yTotalSample,'pdf',@(yTotalSample,a,b,c,d) yMLEfittingTotal(yTotalSample,a,b,c,d),'Start',[0,0,0,5]);
     yParams(1,:) = phat(1:2);
-    [phat,~] = mle(yRightSample,'pdf',@(yRightSample,a,b,c,d) mlPDFfittingRight(yRightSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(yRightSample,'pdf',@(yRightSample,a,b,c,d) yMLEfittingRight(yRightSample,a,b,c,d),'Start',[0,0,0,5]);
     yParams(2,:) = phat(1:2);
-    [phat,~] = mle(yLeftSample,'pdf',@(yLeftSample,a,b,c,d) mlPDFfittingLeft(yLeftSample,a,b,c,d),'Start',[0,0,0,5]);
+    [phat,~] = mle(yLeftSample,'pdf',@(yLeftSample,a,b,c,d) yMLEfittingLeft(yLeftSample,a,b,c,d),'Start',[0,0,0,5]);
     yParams(3,:) = phat(1:2);
 
     y4TotalMSE(i) = sum((yTotalTest - (yParams(1,1) .* maxSpeedTest + yParams(1,2))).^2) ./ length(maxSpeedTest);
@@ -155,9 +155,8 @@ for i = 1:test_n
     y7LateralMSE(i) = (sum((yRightTest - (yParams(1,1) .* rightwardTest + 0)).^2) + sum((yLeftTest - (yParams(1,1) .* leftwardTest + 0)).^2))./ (length(rightwardTest)+length(leftwardTest));
     y8LateralMSE(i) = (sum((yRightTest - (0 .* rightwardTest + yParams(1,2))).^2) + sum((yLeftTest - (0 .* leftwardTest + yParams(1,2))).^2))./ (length(rightwardTest)+length(leftwardTest));
     y9LateralMSE(i) = (sum((yRightTest - (0 .* rightwardTest + 0)).^2) + sum((yLeftTest - (0 .* leftwardTest + 0)).^2))./ (length(rightwardTest)+length(leftwardTest));
-
-    perc = floor(100*i/test_n);
-    fprintf('\b\b\b\b%4d%%',perc);
+    
+    i
 end
 
 warning('on')
@@ -196,7 +195,7 @@ for i = 1:model_n
     ySemMSE(i) = std(yModel(:,i)) ./ test_n;
     yMeanMSE(i) = mean(yModel(:,i));
 end
-subplot(1,2,1)
+
 errorbar(1:9,yMeanMSE,ySemMSE,'o','MarkerSize',8,'LineWidth',2)
 xlim([0,10])
 xlabel('Model #')
@@ -205,6 +204,7 @@ xticks(0:10)
 title('Model Comparison for Orthogonal Bias')
 %%
 % | Model | Intercept | Slope |
+% |-------|-----------|-------|
 % |   1   |   indiv   | indiv |
 % |   2   |   total   | indiv |
 % |   3   |   indiv   | total |
