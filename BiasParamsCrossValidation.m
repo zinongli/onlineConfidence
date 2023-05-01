@@ -1,7 +1,6 @@
 %% Parameter Generation
 % Because this is a cross validation on the linear fit of BIAS, the null
 % hypothesis is zero for both parameters: slope and intercept
-set(groot,'defaultAxesFontSize',18)
 load('data_onlineConf/JX/JX_MaxSpeed.mat','maxSpeed')
 load('JX_rightMaxSpeed.mat','rightward')
 load('JX_LeftMaxSpeed.mat','leftward')
@@ -171,27 +170,28 @@ yModel(:,7) = y7LateralMSE;
 yModel(:,8) = y8LateralMSE;
 yModel(:,9) = y9LateralMSE;
 %% Model Comparison
+set(groot,'defaultAxesFontSize',18)
 figure(1)
 subplot(1,2,1)
 xModel_n = size(xModel,2);
 xSemMSE = NaN(1,xModel_n);
 xMeanMSE = NaN(1,xModel_n);
-for i = 1:model_n
+for i = 1:xModel_n
     xSemMSE(i) = std(xModel(:,i)) ./ test_n;
     xMeanMSE(i) = mean(xModel(:,i));
 end
 errorbar(1:9,xMeanMSE,xSemMSE,'o','MarkerSize',8,'LineWidth',2)
 xlim([0,10])
 xlabel('Model #')
-ylabel('SEM of MSE')
+ylabel('MSE')
 xticks(0:10)
 title('Model Comparison for Along Bias')
-
+grid on
 subplot(1,2,2)
 yModel_n = size(yModel,2);
 ySemMSE = NaN(1,yModel_n);
 yMeanMSE = NaN(1,yModel_n);
-for i = 1:model_n
+for i = 1:yModel_n
     ySemMSE(i) = std(yModel(:,i)) ./ test_n;
     yMeanMSE(i) = mean(yModel(:,i));
 end
@@ -199,9 +199,11 @@ end
 errorbar(1:9,yMeanMSE,ySemMSE,'o','MarkerSize',8,'LineWidth',2)
 xlim([0,10])
 xlabel('Model #')
-ylabel('SEM of MSE')
+ylabel('MSE')
 xticks(0:10)
 title('Model Comparison for Orthogonal Bias')
+grid on
+sgtitle('Test N = 100, Errorbar for SEM','FontSize',18)
 %%
 % | Model | Intercept | Slope |
 % |-------|-----------|-------|

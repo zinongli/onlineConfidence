@@ -10,7 +10,7 @@ points2 = NaN(1,length(speeds));
 params = SAparams(:,Left + 1); %therefore SAparams is right column | left column
 
 for ss = 1:length(speeds) %loop over all speeds (incorporates errors)
-    avgSpeed = speeds(ss) * params(11) + params(12);
+    avgSpeed = speeds(ss) * params(9) + params(10);
     time = distance/avgSpeed;
     remainTime = totalTime - time;
     remainScore = (remainTime/totalTime)*10;
