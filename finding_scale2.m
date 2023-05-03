@@ -2,23 +2,17 @@ totalTime = 3; % secs
 speedRange = [100 1600];
 
 
-participant = 1;
-if participant == 1 % JX
-    SAparams = [0.007439540690441, 10.919040445152977, 0.006120633676816, 4.625618271214958, 0.465, 72.52];
-elseif participant == 0 % ZL
-    SAparams = [0.00432, 6.61, 0.00423, 1.74, 0.480, 65.71]; %group_n = 20
-end
 
-speedResolution = 100;
+
+
+
+speedResolution = 200;
 speeds = linspace(speedRange(1),speedRange(2),speedResolution);
+tSizeScale = 1.5;
 
-tSizeScale = 0.5;
-a = SAparams(1);
-b = SAparams(2);
-c = SAparams(3);
-d = SAparams(4);
-e = SAparams(5);
-f = SAparams(6);
+
+Left = 1;
+UniLatParams = SAparams(:,Left + 1); %therefore SAparams is right column | left column
 
 distance = 80:10:370; %mm
 penalty = 0.2; % secs
@@ -31,33 +25,39 @@ alt_scale = NaN(length(target),length(distance));
 opt_speed = NaN(length(target),length(distance));
 for tt = 1:length(target) %loop over all target sizes
     target1 = target(tt);
-    target2 = target1 * tSizeScale; 
     
     for dd = 1:length(distance) %loop over all distances
         
         for ss = 1:length(speeds) %loop over all speeds (incorporates errors)
-            avgSpeed = speeds(ss) * e + f;
+            avgSpeed = speeds(ss) * UniLatParams(9) + UniLatParams(10);
             time = distance(dd)/avgSpeed;
             remainTime = totalTime - time;
             remainScore = (remainTime/totalTime)*10;
-            remainScoreSwitch = ((remainTime + penalty)/totalTime)*10;
-            errorx = speeds(ss) * a + b;
-            errory = speeds(ss) * c + d;
-            probHit1 = compute_phit2(target1,errorx,errory);
-            probHit2 = compute_phit2(target2,errorx,errory);
+            remainScoreSwitch = ((remainTime - penalty)/totalTime)*10;
+            
+            biasx = speeds(ss) * UniLatParams(1) + UniLatParams(2);
+            biasy = speeds(ss) * UniLatParams(3) + UniLatParams(4);
+            errorx = speeds(ss) * UniLatParams(5) + UniLatParams(6);
+            errory = speeds(ss) * UniLatParams(7) + UniLatParams(8);
+            
+            probHit1 = compute_phit8(target1,errorx,errory, biasx, biasy);
+            probHit2 = compute_phit8(target1.*tSizeScale,errorx,errory, biasx, biasy);
             points1(tt,dd,ss) = remainScore * probHit1;
             points2(tt,dd,ss) = remainScoreSwitch * probHit2;
         end
         [value,ind] = max(points1(tt,dd,:));
         time = distance(dd)/speeds(ind);
-        errorx = speeds(ind) * a + b;
-        errory = speeds(ind) * c + d;
-        alt_phit(tt,dd) = value / (totalTime - time + penalty); 
+        biasx = speeds(ind) * UniLatParams(1) + UniLatParams(2);
+        biasy = speeds(ind) * UniLatParams(3) + UniLatParams(4);
+        errorx = speeds(ind) * UniLatParams(5) + UniLatParams(6);
+        errory = speeds(ind) * UniLatParams(7) + UniLatParams(8);
+        alt_phit(tt,dd) = value / (totalTime - time - penalty);
         % alt_phit is the alternative probability required for switching to be beneficial
         opt_speed(tt,dd) = speeds(ind);
         if alt_phit(tt,dd) < 0.99
-            fun = @(x) abs(compute_phit2(x,errorx,errory) - alt_phit(tt,dd));
+            fun = @(x) abs(compute_phit8(x,errorx,errory, biasx, biasy) - alt_phit(tt,dd));
             x0 = target(tt);
+%             x = bads(fun,x0,0,50);
             x = fminsearch(fun,x0);
             alt_scale(tt,dd) = x./target(tt);
         end

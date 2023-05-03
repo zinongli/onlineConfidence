@@ -28,13 +28,19 @@ if subj == 'JX'
     load(['data_onlineConf/' subj '/' 'JM_practice_traj_S1c_06-Apr-2023_rawtotal.mat'])
     load(['data_onlineConf/' subj '/' 'JM_practice_traj_S1c_06-Apr-2023_traXtotal.mat'])
     load(['data_onlineConf/' subj '/' 'JM_practice_traj_S1c_06-Apr-2023_traYtotal.mat'])
-    load(['data_onlineConf/' subj '/' 'JX_MaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_MaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_rightMaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_leftMaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_SAparams8.mat'])
 elseif subj == 'ZL'
     load(['data_onlineConf/' subj '/' 'pilot_practice_traj_S1_31-Mar-2023_tform.mat'])
     load(['data_onlineConf/' subj '/' 'rawComplete.mat'])
     load(['data_onlineConf/' subj '/' 'xTrajComplete.mat'])
     load(['data_onlineConf/' subj '/' 'yTrajComplete.mat'])
-    load(['data_onlineConf/' subj '/' 'ZL_MaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_MaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_rightMaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_leftMaxSpeed.mat'])
+    load(['data_onlineConf/' subj '/' subj '_SAparams8.mat'])
 end
 
 index = NaN(length(data),1);

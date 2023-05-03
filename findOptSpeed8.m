@@ -1,4 +1,17 @@
 function opt_speed = findOptSpeed8(distance,tSize,totalTime,speedRange,SAparams,Left)
+
+% SAparams: 
+% |    R    |    L    |
+% |--------------------
+% |  X B S  |  X B S  |
+% |  X B I  |  X B I  |
+% |  Y B S  |  Y B S  |
+% |  Y B I  |  Y B I  |
+% |  X S S  |  X S S  |
+% |  X S I  |  X S I  |
+% |  Y S S  |  Y S S  |
+% |  Y S I  |  Y S I  |
+
 speedResolution = 2000;
 speeds = linspace(speedRange(1),speedRange(2),speedResolution);
 penalty = 0.2;
@@ -16,10 +29,10 @@ for ss = 1:length(speeds) %loop over all speeds (incorporates errors)
     remainScore = (remainTime/totalTime)*10;
     remainScoreSwitch = ((remainTime - penalty)/totalTime)*10;
     
-    errorx = speeds(ss) * params(1) + params(2);
-    errory = speeds(ss) * params(3) + params(4);
-    biasx = speeds(ss) * params(5) + params(6);
-    biasy = speeds(ss) * params(7) + params(8);
+    biasx = speeds(ss) * params(1) + params(2);
+    biasy = speeds(ss) * params(3) + params(4);
+    errorx = speeds(ss) * params(5) + params(6);
+    errory = speeds(ss) * params(7) + params(8);
     
     probHit1 = compute_phit8(tSize,errorx,errory, biasx, biasy);
     probHit2 = compute_phit8(tSize.*tSizeScale,errorx,errory, biasx, biasy);
