@@ -12,34 +12,24 @@ function opt_speed = findOptSpeed8(distance,tSize,totalTime,speedRange,SAparams,
 % |  Y S S  |  Y S S  |
 % |  Y S I  |  Y S I  |
 
-speedResolution = 2000;
-speeds = linspace(speedRange(1),speedRange(2),speedResolution);
-penalty = 0.2;
-tSizeScale = 1.2;
-
-points1 = NaN(1,length(speeds));
-points2 = NaN(1,length(speeds));
-
+maxScore = 10;
+S_0 = mean(speedRange);
 params = SAparams(:,Left + 1); %therefore SAparams is right column | left column
 
-for ss = 1:length(speeds) %loop over all speeds (incorporates errors)
-    avgSpeed = speeds(ss) * params(9) + params(10);
-    time = distance/avgSpeed;
-    remainTime = totalTime - time;
-    remainScore = (remainTime/totalTime)*10;
-    remainScoreSwitch = ((remainTime - penalty)/totalTime)*10;
-    
-    biasx = speeds(ss) * params(1) + params(2);
-    biasy = speeds(ss) * params(3) + params(4);
-    errorx = speeds(ss) * params(5) + params(6);
-    errory = speeds(ss) * params(7) + params(8);
-    
-    probHit1 = compute_phit8(tSize,errorx,errory, biasx, biasy);
-    probHit2 = compute_phit8(tSize.*tSizeScale,errorx,errory, biasx, biasy);
-    
-    points1(ss) = remainScore * probHit1;
-    points2(ss) = remainScoreSwitch * probHit2;
-end
-[~,ind] = max(points1);
-opt_speed = speeds(ind);
+f = @(speed,params,tSize,maxScore,distance,totalTime) -((totalTime - (distance/(speed*params(9)+params(10))))/totalTime)*maxScore * compute_phit8(tSize,speed*params(5)+params(6),speed*params(7)+params(8),speed*params(1)+params(2),speed*params(3)+params(4));
+fun = @(speed) f(speed,params,tSize,maxScore,distance,totalTime);
+opt_speed = bads(fun,S_0,speedRange(1),speedRange(2));
+%     avgSpeed = speed * params(9) + params(10);
+%     time = distance/avgSpeed;
+%     remainTime = totalTime - time;
+%     remainScore = (remainTime/totalTime)*maxScore;
+%     
+%     biasx = speed * params(1) + params(2);
+%     biasy = speed * params(3) + params(4);
+%     errorx = speed * params(5) + params(6);
+%     errory = speed * params(7) + params(8);
+%     
+%     probHit1 = compute_phit8(tSize,errorx,errory, biasx, biasy);
+%     E_Gain = remainScore * probHit1;
+
 end
