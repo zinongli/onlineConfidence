@@ -11,7 +11,7 @@ for i = 1:360
 end
 
 %%
-
+set(groot,'defaultAxesFontSize',18)
 figure
 plot(optSpeed8,maxSpeed,'o')
 hold on
