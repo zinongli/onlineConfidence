@@ -1,12 +1,12 @@
 totalTime = 3; % secs
 speedRange = [100 1600];
 
-Left = 1;
+Left = 0;
 UniLatParams = SAparams(:,Left + 1); %therefore SAparams is right column | left column
 
 distance = 80:20:370; %mm
 penalty = 0.8; % secs
-target = 2:2:40; %mm
+target = 2:2:30; %mm
 maxScore = 10;
 %%
 
@@ -66,21 +66,10 @@ grid on
 xlabel('target size')
 ylabel('distance')
 zlabel('P(Hit|Switch)')
-title('The P(Hit|Switch) of Normal Target Size')
+title('The P(Hit|Switch) of Normal target size')
+
 
 subplot(1,4,2)
-surf(target,distance,alt_phit', 'EdgeAlpha',0)
-hold on
-% surf(target,distance,alt_phit2', 'EdgeAlpha',0)
-surf(target,distance,repmat([1],length(target),length(distance))','EdgeAlpha',0, 'FaceColor',[0.8,0.8,0.8])
-hold off
-grid on
-xlabel('target size')
-ylabel('distance')
-zlabel('P(Hit|Switch)')
-title('The P(Hit|Switch) Required for Switching to be Equally Desirable')
-
-subplot(1,4,3)
 surf(target,distance,alt_scale', 'EdgeAlpha',0)
 % hold on
 % surf(target,distance,alt_scale2', 'EdgeAlpha',0)
@@ -89,10 +78,10 @@ grid on
 xlabel('target size')
 ylabel('distance')
 zlabel('scale')
-title('The Magnification Scale Required for Switching to be Equally Desirable')
+title('The magnification scale required for switching to be equally desirable')
 
 
-subplot(1,4,4)
+subplot(1,4,3)
 surf(target,distance,opt_speed', 'EdgeAlpha',0)
 % hold on3
 % surf(target,distance,opt_speed2', 'EdgeAlpha',0)
