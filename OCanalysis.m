@@ -32,6 +32,7 @@ if subj == 'JX'
     load(['data_onlineConf/' subj '/' subj '_rightMaxSpeed.mat'])
     load(['data_onlineConf/' subj '/' subj '_leftMaxSpeed.mat'])
     load(['data_onlineConf/' subj '/' subj '_SAparams8.mat'])
+    load(['data_onlineConf/' subj '/' subj '_OptSpeed8.mat'])
 elseif subj == 'ZL'
     load(['data_onlineConf/' subj '/' 'pilot_practice_traj_S1_31-Mar-2023_tform.mat'])
     load(['data_onlineConf/' subj '/' 'rawComplete.mat'])
@@ -41,6 +42,8 @@ elseif subj == 'ZL'
     load(['data_onlineConf/' subj '/' subj '_rightMaxSpeed.mat'])
     load(['data_onlineConf/' subj '/' subj '_leftMaxSpeed.mat'])
     load(['data_onlineConf/' subj '/' subj '_SAparams8.mat'])
+    load(['data_onlineConf/' subj '/' subj '_OptSpeed8.mat'])
+
 end
 
 index = NaN(length(data),1);
@@ -68,20 +71,20 @@ copy(:,27) = 1:length(copy);
 copy(:,19:20) = (copy(:,6:7) - copy(:,8:9)) .* pixellength;
 copy(:,21) = sqrt(sum((copy(:,6:7) - copy(:,8:9)).^2,2)) .* pixellength;
 copy(:,22) = copy(:,21) ./ copy(:,16);
-copy(:,[24,25]) = (copy(:,1:2) - copy(:,8:9)) .* pixellength;% relative target coordinate
+copy(:,24:25) = (copy(:,1:2) - copy(:,8:9)) .* pixellength;% relative target coordinate
 copy(:,23) = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,24:25),2)) - 1) .*copy(:,10);
 copy(:,26) = valid(:,11);
 copy(:,28) = copy(:,26) ~= 0;
 endPoints = (copy(:,6:7) - copy(:,8:9)) .* pixellength;% relative endpoint coordinate
 projScale = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,24:25),2)));
 rejections = endPoints - projScale.* copy(:,24:25);
-tooLeft = NaN(1,length(copy));
+tooRight = NaN(1,length(copy));
 for i = 1:length(copy)
-    tooLeft(i) = sum(cross([endPoints(i,:),0],[rejections(i,:),0])<0); 
+    tooRight(i) = sum(cross([endPoints(i,:),0],[rejections(i,:),0])<0); 
 end
-tooLeft(tooLeft==0) = -1;
+tooRight(tooRight==0) = -1;
 rejLength = sqrt(rejections(:,1).^2 + rejections(:,2).^2);
-copy(:,29) = rejLength .* tooLeft';
+copy(:,29) = rejLength .* tooRight';
 copy([1:60 181:240],3) = 3;
 copy([61:120 241:300],3) = 2;
 copy([121:180 301:360],3) = 1;

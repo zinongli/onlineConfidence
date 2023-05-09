@@ -1,9 +1,12 @@
-function phit2 = compute_phit0(radius, sdx, sdy, biasx, biasy)
+function phit2 = compute_phit0(radius, xyBiasError)
 % radius = 45;    % target/penalty radius in pixels
 % dsd = 1;       % resolution of SD in pixels
 % SDs = 10:dsd:70;
 % dx = .1;         % resolution of shifts in pixels
-
+sdx = xyBiasError(3);
+sdy = xyBiasError(4);
+biasx = xyBiasError(1);
+biasy = xyBiasError(2);
 ninterval = 10001;
 halfIntv = floor(ninterval/2);
 dy = radius/ninterval;

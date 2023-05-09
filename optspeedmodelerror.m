@@ -11,6 +11,11 @@ for i = 1:360
 end
 
 %%
+sss = @(sigma,m,o) log(1/sqrt(2*pi)) * length(m) - (-log(sigma) * length(m) + sum(-((m'-o).^2)./(2 * sigma.^2)));
+sfun = @(sigma) sss(sigma,maxSpeed,optSpeed8);
+sigma_fit = bads(sfun,0.001,0.001,300);
+sss(sigma_fit,maxSpeed,optSpeed8);
+%%
 set(groot,'defaultAxesFontSize',18)
 figure
 plot(optSpeed8,maxSpeed,'o')
