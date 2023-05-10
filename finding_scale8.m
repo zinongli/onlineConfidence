@@ -1,5 +1,5 @@
 totalTime = 3; % secs
-speedRange = [100 1600];
+speedRange = [100 1200];
 
 Left = 1;
 UniLatParams = SAparams(:,Left + 1); %therefore SAparams is right column | left column

@@ -16,6 +16,11 @@ sfun = @(sigma) sss(sigma,maxSpeed,optSpeed8);
 sigma_fit = bads(sfun,0.001,0.001,300);
 sss(sigma_fit,maxSpeed,optSpeed8);
 %%
+pb = makedist('Normal');
+qqplot(maxSpeed - optSpeed8',pb)
+%%
+[a,b,c] = swtest(maxSpeed - optSpeed8')
+%%
 set(groot,'defaultAxesFontSize',18)
 figure
 plot(optSpeed8,maxSpeed,'o')

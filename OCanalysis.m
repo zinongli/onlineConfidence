@@ -341,6 +341,44 @@ ylabel('Average Speed mm/s')
 title('Max v.s. Average Speed, each point = one trial')
 mld = fitlm(maxSpeed,copy(:,22))
 %%
+diffs = table2array(mld.Coefficients(2,1)) .* maxSpeed + table2array(mld.Coefficients(1,1)) - copy(:,22);
+pb = makedist('Normal');
+[H,pValue,swStats] = swtest(diffs);
+
+
+theta0 = [table2array(mld.Coefficients(2,1)),table2array(mld.Coefficients(1,1)),0.0001,30];
+UB = [5,200,5,300];
+LB = [0,-200,0.0001,1];
+
+f = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3).*speed + theta(4)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3).*speed+theta(4)).^2))));
+fun = @(theta) f(theta,maxSpeed,copy(:,22));
+changingSig = bads(fun,theta0,LB,UB);
+
+theta0 = [table2array(mld.Coefficients(2,1)),table2array(mld.Coefficients(1,1)),30];
+UB = [5,200,300];
+LB = [0,-200,1];
+f2 = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3)).^2))));
+fun2 = @(theta) f2(theta,maxSpeed,copy(:,22));
+fixSig = bads(fun2,theta0,LB,UB);
+
+changingaic = 2 * 4 - 2 * -fun(changingSig);
+changingbic = 4 * log(length(maxSpeed)) - 2 * -fun(changingSig);
+fixaic = 2 * 5 - 2 * -fun2(fixSig);
+fixbic = 5 * log(length(maxSpeed)) - 2 * -fun2(fixSig);
+%%
+indices = 1:1600;
+plot(maxSpeed,copy(:,22),'o')
+hold on
+plot(indices,(changingSig(1) .* indices) + changingSig(2),'--r')
+plot(indices,(changingSig(1) .* indices) + changingSig(2) + 1.5*(changingSig(3) * indices + changingSig(4)),'--r')
+plot(indices,(changingSig(1) .* indices) + changingSig(2) - 1.5*(changingSig(3) * indices + changingSig(4)),'--r')
+% plot(indices,(changingSig(1) .* indices) + changingSig(2) + 2*(changingSig(3) * indices + changingSig(4)),'--r')
+% plot(indices,(changingSig(1) .* indices) + changingSig(2) - 2*(changingSig(3) * indices + changingSig(4)),'--r')
+hold off
+xlabel('Speed mm/s')
+ylabel('Error mm')
+
+%%
 figure;
 plot3(copy(:,15),copy(:,10),maxSpeed,'o')
 grid on
