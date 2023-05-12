@@ -15,8 +15,8 @@ function opt_speed = findOptSpeed8(distance,tSize,totalTime,speedRange,SAparams,
 maxScore = 10;
 S_0 = mean(speedRange);
 params = SAparams(:,Left + 1); %therefore SAparams is right column | left column
-
-f = @(speed,params,tSize,maxScore,distance,totalTime) -((totalTime - (distance/speed))/totalTime)*maxScore * compute_phit8(tSize,speed*params(5)+params(6),speed*params(7)+params(8),speed*params(1)+params(2),speed*params(3)+params(4));
+UniLatParams = [params(1:2:9,:),params(2:2:10,:)];
+f = @(speed,params,tSize,maxScore,distance,totalTime) -((totalTime - (distance/(UniLatParams(5,1) * speed + UniLatParams(5,2))))/totalTime)*maxScore * compute_phit0(tSize, speed .* UniLatParams(:,1) + UniLatParams(:,2));
 fun = @(speed) f(speed,params,tSize,maxScore,distance,totalTime);
 opt_speed = bads(fun,S_0,speedRange(1),speedRange(2),speedRange(1),speedRange(2));
 

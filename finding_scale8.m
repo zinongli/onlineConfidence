@@ -1,12 +1,13 @@
 totalTime = 3; % secs
-speedRange = [100 1200];
+speedRange = [100 1600];
 
-Left = 1;
+Left = 0;
 UniLatParams = SAparams(:,Left + 1); %therefore SAparams is right column | left column
+UniLatParams = [UniLatParams(1:2:7,:),UniLatParams(2:2:8,:);UniLatParams(9:10,:),UniLatParams(9:10,:)];
 
 distance = 80:20:370; %mm
 penalty = 0.8; % secs
-target = 2:2:40; %mm
+target = 5:2:35; %mm
 maxScore = 10;
 %%
 
@@ -17,20 +18,17 @@ opt_speed = NaN(length(target),length(distance));
 for tt = 1:length(target) %loop over all target sizes
     for dd = 1:length(distance) %loop over all distances
         optS_i = findOptSpeed8(distance(dd),target(tt),totalTime,speedRange,SAparams,Left);
-        time = distance(dd)/optS_i;
+        time = distance(dd)/(UniLatParams(5,1) * optS_i + UniLatParams(6,1));
         remainTime = totalTime - time;
         remainScore = (remainTime/totalTime)*maxScore;
-        biasx = optS_i * UniLatParams(1) + UniLatParams(2);
-        biasy = optS_i * UniLatParams(3) + UniLatParams(4);
-        errorx = optS_i * UniLatParams(5) + UniLatParams(6);
-        errory = optS_i * UniLatParams(7) + UniLatParams(8);
-        reg_phit(tt,dd) = compute_phit0(target(tt),errorx,errory, biasx, biasy);
+        xyBiasError = optS_i .* UniLatParams(:,1) + UniLatParams(:,2);
+        reg_phit(tt,dd) = compute_phit0(target(tt), xyBiasError);
         eGainReg = remainScore * reg_phit(tt,dd);
         alt_phit(tt,dd) = eGainReg * totalTime / ((totalTime - time - penalty) * maxScore);
         % alt_phit is the alternative probability required for switching to be beneficial
         opt_speed(tt,dd) = optS_i;
         if alt_phit(tt,dd) < 0.99
-            fun = @(x) abs(compute_phit0(x,errorx,errory, biasx, biasy) - alt_phit(tt,dd));
+            fun = @(x) abs(compute_phit0(x,xyBiasError) - alt_phit(tt,dd));
             x0 = target(tt);
 %             x = bads(fun,x0,0,50);
             x = fminsearch(fun,x0);

@@ -341,9 +341,9 @@ ylabel('Average Speed mm/s')
 title('Max v.s. Average Speed, each point = one trial')
 mld = fitlm(maxSpeed,copy(:,22))
 %%
-diffs = table2array(mld.Coefficients(2,1)) .* maxSpeed + table2array(mld.Coefficients(1,1)) - copy(:,22);
-pb = makedist('Normal');
-[H,pValue,swStats] = swtest(diffs);
+% diffs = table2array(mld.Coefficients(2,1)) .* maxSpeed + table2array(mld.Coefficients(1,1)) - copy(:,22);
+% pb = makedist('Normal');
+% [H,pValue,swStats] = swtest(diffs);
 
 
 theta0 = [table2array(mld.Coefficients(2,1)),table2array(mld.Coefficients(1,1)),0.0001,30];

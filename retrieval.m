@@ -1,8 +1,9 @@
-%% misc
+%% misc (arbitary values)
 speedRange = [100 1800];
 penalty = 0.8; % secs
 maxScore = 10;
-sigma_s = 260; % sigma of actual max speed deviation from opt max speed
+sigma_s = 25; % sigma of actual max speed deviation from opt max speed
+max2avgSig = 50;
 %% Task Env Generation
 dists_n = 3;
 proj2tablet = 1.886;
@@ -13,7 +14,7 @@ edgesize = 50;
 sizes_n = 6;
 WindowWidth = 1024; % projector window width
 yCenter = 384; % projector screen y center
-rep = 20;
+rep = 10;
 totalTime = 3;
 
 distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
@@ -43,7 +44,7 @@ mas = unifrnd(0.04,0.06);
 mai = unifrnd(50,80);
 UniLatParams = [xbs;xbi;ybs;ybi;xes;xei;yes;yei;mas;mai];
 SAparams = [UniLatParams UniLatParams]; % placeholder for now
-UniLatParams = [UniLatParams(1:2:7,:),UniLatParams(2:2:8,:)];
+UniLatParams = [UniLatParams(1:2:9,:),UniLatParams(2:2:10,:)];
 Left = 0;
 StoSimData1 = NaN(length(randsizes),9);
 StoSimData2 = NaN(length(randsizes),9);
@@ -64,14 +65,14 @@ for i = 1:length(randsizes)
         rho = randdists(i)-UniRandRadius + UniRandRadius * 2 * rand(1);
         [offset(1),offset(2)] = pol2cart(theta,rho);
         StoSimData1(i,1:2) = offset;
-        StoSimData2(i,1:2) = - offset;
+        StoSimData2(i,1:2) = offset;
     end
     StoSimData1(i,3) = norm(offset);
     StoSimData2(i,3) = norm(offset);
     StoSimData1(i,4) = randsizes(i); % size of the small and solid target
     StoSimData2(i,4) = randsizes(i);
     optS_1 = findOptSpeed8(norm(offset),randsizes(i),totalTime,speedRange,SAparams,Left);
-    time1 = norm(offset)/optS_1;
+    time1 = norm(offset)/(UniLatParams(5,1) * optS_1 + UniLatParams(5,2));
     remainTime1 = totalTime - time1;
     remainScore = (remainTime1/totalTime)*maxScore;
     xyBiasError1 = optS_1 .* UniLatParams(:,1) + UniLatParams(:,2);
@@ -89,7 +90,7 @@ for i = 1:length(randsizes)
         alt_scale1 = StoSimData1(i,5)./randsizes(i); % the scale of magnification
         % model 2 size generation and error checking
         optS_2 = findOptSpeed8(norm(offset),StoSimData1(i,5),totalTime,speedRange,SAparams,Left);
-        time2 = norm(offset)/optS_2;
+        time2 = norm(offset)/(UniLatParams(5,1) * optS_2 + UniLatParams(5,2));
         remainTime2 = totalTime - time2 - penalty;
         remainScore2 = (remainTime2/totalTime)*maxScore;
         xyBiasError2 = optS_2 .* UniLatParams(:,1) + UniLatParams(:,2);
@@ -104,45 +105,175 @@ for i = 1:length(randsizes)
         % model 1 endpoint gen
         actS_1 = normrnd(optS_1,sigma_s);
         StoSimData1(i,9) = actS_1;
+        StoSimData1(i,10) = normrnd(UniLatParams(5,1) * actS_1 + UniLatParams(5,2),max2avgSig);
         xyBiasErrorAct1 = actS_1 .* UniLatParams(:,1) + UniLatParams(:,2);
-        alongError1(i) = normrnd(xyBiasErrorAct1(1),xyBiasErrorAct1(3));
-        orthoError1(i) = normrnd(xyBiasErrorAct1(2),xyBiasErrorAct1(4));
-        endPointErrorX1 = offset .* alongError1(i) / norm(offset);
-        endPointErrorY1 = [offset(2),-offset(1)] .* orthoError1(i) / norm(offset);
-        StoSimData1(i,6:7) = offset + endPointErrorX1 + endPointErrorY1;
-        if norm([alongError1(i) orthoError1(i)]) > StoSimData1(i,5)
+        alongError1 = normrnd(xyBiasErrorAct1(1),xyBiasErrorAct1(3));
+        orthoError1 = normrnd(xyBiasErrorAct1(2),xyBiasErrorAct1(4));
+%         endPointErrorX1 = offset .* alongError1 / norm(offset);
+%         endPointErrorY1 = [offset(2),-offset(1)] .* orthoError1 / norm(offset);
+%         StoSimData1(i,6:7) = offset + endPointErrorX2 + endPointErrorY2;
+        StoSimData1(i,6:7) = [alongError1, orthoError1];
+        if norm([alongError1 orthoError1]) > StoSimData1(i,5)
             % miss
             StoSimData1(i,8) = 0;
-        elseif (StoSimData1(i,4) < norm([alongError1(i) orthoError1(i)])) && ((norm([alongError1(i) orthoError1(i)]) < StoSimData1(i,5)))
+        elseif (StoSimData1(i,4) < norm([alongError1 orthoError1])) && ((norm([alongError1 orthoError1]) < StoSimData1(i,5)))
             % side hit
             StoSimData1(i,8) = 1;
-        elseif norm([alongError1(i) orthoError1(i)]) < StoSimData1(i,4)
+        elseif norm([alongError1 orthoError1]) < StoSimData1(i,4)
             % bullseye
             StoSimData1(i,8) = 2;
         end
         % model 2 endpoint gen
         actS_2 = normrnd(optS_2,sigma_s);
         StoSimData2(i,9) = actS_2;
+        StoSimData2(i,10) = normrnd(UniLatParams(5,1) * actS_2 + UniLatParams(5,2),max2avgSig);
         xyBiasErrorAct2 = actS_2 .* UniLatParams(:,1) + UniLatParams(:,2);
-        alongError2(i) = normrnd(xyBiasErrorAct2(1),xyBiasErrorAct2(3));
-        orthoError2(i) = normrnd(xyBiasErrorAct2(2),xyBiasErrorAct2(4));
-        endPointErrorX2 = offset .* alongError2(i) / norm(offset);
-        endPointErrorY2 = [offset(2),-offset(1)] .* orthoError2(i) / norm(offset);
-        StoSimData2(i,6:7) = offset + endPointErrorX2 + endPointErrorY2;
-        if norm([alongError2(i) orthoError2(i)]) > StoSimData1(i,5) 
+        alongError2 = normrnd(xyBiasErrorAct2(1),xyBiasErrorAct2(3));
+        orthoError2 = normrnd(xyBiasErrorAct2(2),xyBiasErrorAct2(4));
+%         endPointErrorX2 = offset .* alongError2 / norm(offset);
+%         endPointErrorY2 = [offset(2),-offset(1)] .* orthoError2 / norm(offset);
+%         StoSimData2(i,6:7) = offset + endPointErrorX2 + endPointErrorY2;
+        StoSimData2(i,6:7) = [alongError2 , orthoError2];
+        if norm([alongError2 orthoError2]) > StoSimData1(i,5) 
             % miss
             StoSimData2(i,8) = 0;
-        elseif (StoSimData1(i,4) < norm([alongError2(i) orthoError2(i)])) && ((norm([alongError2(i) orthoError2(i)]) < StoSimData1(i,5)))
-            % side hit
+        elseif (StoSimData1(i,4) < norm([alongError2 orthoError2])) && ((norm([alongError2 orthoError2]) < StoSimData1(i,5)))
+            % body shot
             StoSimData2(i,8) = 1;
-        elseif norm([alongError2(i) orthoError2(i)]) < StoSimData1(i,4)
+        elseif norm([alongError2 orthoError2]) < StoSimData1(i,4)
             % bullseye
             StoSimData2(i,8) = 2;
         end
     end
     i
 end
+%% elimination
+vStoSimData1 = StoSimData1(StoSimData1(:,5) ~= 0,:);
+vStoSimData2 = StoSimData2(StoSimData1(:,5) ~= 0,:);
+
+%% table of content
+% 1,2 = subjective target location
+% 3 = target distance
+% 4 = target size
+% 5 = alternative target size
+% 6,7 = along & orthogonal error
+% 8 = hit state ( 0 = miss, 1 = body shot, 2 = bullseye)
+% 9 = max speed
+% 10 = avg speed
+%% retrieval
+
+xTotal = [vStoSimData1(:,6);vStoSimData2(:,6)];
+% xRight1 = vStoSimData1(vStoSimData1(:,1)>0,6);
+% xLeft1 = vStoSimData1(vStoSimData1(:,1)<0,6);
+
+
+theta0 = [0,0,0.0001,5];
+UB = [1,30,1,50];
+LB = [-1,-30,0.0001,1];
+
+f = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3).*speed + theta(4)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3).*speed+theta(4)).^2))));
+
+
+xParams = NaN(3,4);
+fun = @(theta) f(theta,[vStoSimData1(:,9);vStoSimData2(:,9)],xTotal);
+xParams(1,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData1(vStoSimData1(:,1)>0,9),xRight1);
+% xParams1(2,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData1(vStoSimData1(:,1)<0,9),xLeft1);
+% xParams1(3,:) = bads(fun,theta0,LB,UB);
+
+
+% xTotal2 = vStoSimData2(:,6);
+% xRight2 = vStoSimData2(vStoSimData2(:,1)>0,6);
+% xLeft2 = vStoSimData2(vStoSimData2(:,1)<0,6);
+% 
+% 
+% theta0 = [0,0,0.0001,5];
+% UB = [1,30,1,50];
+% LB = [-1,-30,0.0001,1];
+% 
+% f = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3).*speed + theta(4)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3).*speed+theta(4)).^2))));
+% 
+
+% xParams2 = NaN(3,4);
+% fun = @(theta) f(theta,vStoSimData2(:,9),xTotal2);
+% xParams2(1,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData2(vStoSimData2(:,1)>0,9),xRight2);
+% xParams2(2,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData2(vStoSimData2(:,1)<0,9),xLeft2);
+% xParams2(3,:) = bads(fun,theta0,LB,UB);
+
+
+yTotal = [vStoSimData1(:,7);vStoSimData2(:,7)];
+% yRight1 = vStoSimData1(vStoSimData1(:,1)>0,7);
+% yLeft1 = vStoSimData1(vStoSimData1(:,1)<0,7);
+
+
+theta0 = [0,0,0.0001,5];
+UB = [1,30,1,50];
+LB = [-1,-30,0.0001,1];
+
+f = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3).*speed + theta(4)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3).*speed+theta(4)).^2))));
+
+
+yParams = NaN(3,4);
+fun = @(theta) f(theta,[vStoSimData1(:,9);vStoSimData2(:,9)],yTotal);
+yParams(1,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData1(vStoSimData1(:,1)>0,9),yRight1);
+% yParams1(2,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData1(vStoSimData1(:,1)<0,9),yLeft1);
+% yParams1(3,:) = bads(fun,theta0,LB,UB);
+
+% yTotal2 = vStoSimData2(:,7);
+% yRight2 = vStoSimData2(vStoSimData2(:,1)>0,7);
+% yLeft2 = vStoSimData2(vStoSimData2(:,1)<0,7);
+% 
+% 
+% theta0 = [0,0,0.0001,5];
+% UB = [1,30,1,50];
+% LB = [-1,-30,0.0001,1];
+% 
+% f = @(theta,speed,error) -(log(1/sqrt(2*pi)) * length(speed) + sum(-log(theta(3).*speed + theta(4)) - (((error - (theta(1).*speed + theta(2))).^2)./ (2.*(theta(3).*speed+theta(4)).^2))));
+% 
+% 
+% yParams2 = NaN(3,4);
+% fun = @(theta) f(theta,vStoSimData2(:,9),yTotal2);
+% yParams2(1,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData2(vStoSimData2(:,1)>0,9),yRight2);
+% yParams2(2,:) = bads(fun,theta0,LB,UB);
+% fun = @(theta) f(theta,vStoSimData2(vStoSimData2(:,1)<0,9),yLeft2);
+% yParams2(3,:) = bads(fun,theta0,LB,UB);
+mld1 = fitlm([vStoSimData1(:,9);vStoSimData2(:,9)],[vStoSimData1(:,10);vStoSimData2(:,10)]);
+ReUniLatParams = [xParams(1,1:2);yParams(1,1:2);xParams(1,3:4);yParams(1,3:4);table2array(mld1.Coefficients(2,1)),table2array(mld1.Coefficients(1,1))];
+UniLatParams;
+cache = ReUniLatParams';
+ReSAparams = [cache(:),cache(:)];
+%% opt speed prediction
+speedRange = [100 1600];
+ReConcat = [vStoSimData1;vStoSimData2];
+ReOptSpeed8 = NaN(1,length(ReConcat));
+
+for i = 1:length(ReConcat)
+%     Left = ReConcat(i,1)<0;
+    ReOptSpeed8(i) = findOptSpeed8(ReConcat(i,3),ReConcat(i,4),totalTime,speedRange,ReSAparams,0);
+    i
+end
 %%
-compare = [StoSimData1(:,8),StoSimData2(:,8)];
-figure;bar(sort(compare(:,1)))
-figure;bar(sort(compare(:,2)))
+sss = @(sigma,m,o) log(1/sqrt(2*pi)) * length(m) - (-log(sigma) * length(m) + sum(-((m'-o).^2)./(2 * sigma.^2)));
+sfun = @(sigma) sss(sigma,ReConcat(:,9),ReOptSpeed8);
+sigma_fit = bads(sfun,0.001,0.001,300);
+sss(sigma_fit,ReConcat(:,9),ReOptSpeed8);
+%%
+pb = makedist('Normal');
+qqplot(ReConcat(:,9) - ReOptSpeed8',pb)
+%%
+[a,b,c] = swtest(ReConcat(:,9) - ReOptSpeed8')
+%%
+set(groot,'defaultAxesFontSize',18)
+figure
+plot(ReOptSpeed8,ReConcat(:,9),'o')
+hold on
+plot(300:1400,300:1400,'--')
+hold off
+xlabel('Optimal Max Speed (mm/s)','FontSize',18)
+ylabel('Actual Max Speed (mm/s)','FontSize',18)
