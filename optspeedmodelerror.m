@@ -11,10 +11,39 @@ for i = 1:360
 end
 
 %%
-sss = @(sigma,m,o) log(1/sqrt(2*pi)) * length(m) - (-log(sigma) * length(m) + sum(-((m'-o).^2)./(2 * sigma.^2)));
-sfun = @(sigma) sss(sigma,maxSpeed,optSpeed8);
-sigma_fit = bads(sfun,0.001,0.001,300);
-sss(sigma_fit,maxSpeed,optSpeed8);
+% sss = @(sigma,m,o) log(1/sqrt(2*pi)) * length(m) - (-log(sigma) * length(m) + sum(-((m'-o).^2)./(2 * sigma.^2)));
+% sfun = @(sigma) sss(sigma,maxSpeed,optSpeed8);
+% sigma_fit = bads(sfun,0.001,0.001,300);
+% sss(sigma_fit,maxSpeed,optSpeed8);
+
+UB = [5,500,5,500];
+LB = [-5,-500,0.0001,1];
+theta0 = [0,0,0.0001,1];
+f = @(theta,maxS,optS) -(log(1/sqrt(2*pi)) * length(optS) + sum(-log(theta(3).*optS + theta(4)) - (((maxS - (theta(1).*optS + theta(2))).^2)./ (2.*(theta(3).*optS+theta(4)).^2))));
+fun = @(theta) f(theta,maxSpeed,optSpeed8');
+theta = bads(fun,theta0,LB,UB)
+
+theta0 = [0,0,30];
+UB = [5,500,500];
+LB = [-5,-500,1];
+f2 = @(theta,maxS,optS) -(log(1/sqrt(2*pi)) * length(optS) + sum(-log(theta(3)) - (((maxS - (theta(1).*optS + theta(2))).^2)./ (2.*(theta(3)).^2))));
+fun2 = @(theta) f2(theta,maxSpeed,optSpeed8');
+fixSig = bads(fun2,theta0,LB,UB)
+
+fun2(fixSig)
+fun(theta)
+
+indices = 1:1600;
+plot(optSpeed8,maxSpeed,'o')
+hold on
+plot(indices,(theta(1) .* indices) + theta(2),'--r')
+plot(indices,(theta(1) .* indices) + theta(2) + ((theta(3) .* indices) + theta(4)),'--r')
+plot(indices,(theta(1) .* indices) + theta(2) - ((theta(3) .* indices) + theta(4)),'--r')
+plot(indices,(theta(1) .* indices) + theta(2) + 2*((theta(3) .* indices) + theta(4)),'--r')
+plot(indices,(theta(1) .* indices) + theta(2) - 2*((theta(3) .* indices) + theta(4)),'--r')
+hold off
+xlabel('Speed mm/s')
+ylabel('Error mm')
 %%
 pb = makedist('Normal');
 qqplot(maxSpeed - optSpeed8',pb)

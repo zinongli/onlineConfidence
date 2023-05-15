@@ -1,13 +1,13 @@
 totalTime = 3; % secs
-speedRange = [100 1600];
+speedRange = [100 1800];
 
 Left = 0;
 UniLatParams = SAparams(:,Left + 1); %therefore SAparams is right column | left column
-UniLatParams = [UniLatParams(1:2:7,:),UniLatParams(2:2:8,:);UniLatParams(9:10,:),UniLatParams(9:10,:)];
+UniLatParams = [UniLatParams(1:2:11,:),UniLatParams(2:2:12,:)];
 
 distance = 80:20:370; %mm
 penalty = 0.8; % secs
-target = 5:2:35; %mm
+target = 5:5:55; %mm
 maxScore = 10;
 %%
 
@@ -18,20 +18,23 @@ opt_speed = NaN(length(target),length(distance));
 for tt = 1:length(target) %loop over all target sizes
     for dd = 1:length(distance) %loop over all distances
         optS_i = findOptSpeed8(distance(dd),target(tt),totalTime,speedRange,SAparams,Left);
-        time = distance(dd)/(UniLatParams(5,1) * optS_i + UniLatParams(6,1));
+        time = distance(dd)/(UniLatParams(5,1) * optS_i + UniLatParams(5,2));
         remainTime = totalTime - time;
         remainScore = (remainTime/totalTime)*maxScore;
         xyBiasError = optS_i .* UniLatParams(:,1) + UniLatParams(:,2);
         reg_phit(tt,dd) = compute_phit0(target(tt), xyBiasError);
         eGainReg = remainScore * reg_phit(tt,dd);
         alt_phit(tt,dd) = eGainReg * totalTime / ((totalTime - time - penalty) * maxScore);
+        if alt_phit(tt,dd) < 0
+            alt_phit(tt,dd) = NaN;
+        end
         % alt_phit is the alternative probability required for switching to be beneficial
         opt_speed(tt,dd) = optS_i;
-        if alt_phit(tt,dd) < 0.99
+        if alt_phit(tt,dd) < 0.99 || alt_phit(tt,dd) >=0
             fun = @(x) abs(compute_phit0(x,xyBiasError) - alt_phit(tt,dd));
             x0 = target(tt);
-%             x = bads(fun,x0,0,50);
-            x = fminsearch(fun,x0);
+            x = bads(fun,x0,0,100);
+%             x = fminsearch(fun,x0);
             alt_scale(tt,dd) = x./target(tt);
         end
     end
@@ -64,10 +67,10 @@ grid on
 xlabel('target size')
 ylabel('distance')
 zlabel('P(Hit|Switch)')
-title('The P(Hit|Switch) of Normal Target Size')
+title('P(Hit|Switch) of Normal Size')
 
 subplot(1,4,2)
-surf(target,distance,alt_phit', 'EdgeAlpha',0)
+surf(target,distance,alt_phit' - reg_phit', 'EdgeAlpha',0)
 hold on
 % surf(target,distance,alt_phit2', 'EdgeAlpha',0)
 surf(target,distance,repmat([1],length(target),length(distance))','EdgeAlpha',0, 'FaceColor',[0.8,0.8,0.8])
@@ -76,7 +79,7 @@ grid on
 xlabel('target size')
 ylabel('distance')
 zlabel('P(Hit|Switch)')
-title('The P(Hit|Switch) Required for Switching to be Equally Desirable')
+title('P(Hit|Switch) for Equally Favorable')
 
 subplot(1,4,3)
 surf(target,distance,alt_scale', 'EdgeAlpha',0)
@@ -87,7 +90,7 @@ grid on
 xlabel('target size')
 ylabel('distance')
 zlabel('scale')
-title('The Magnification Scale Required for Switching to be Equally Desirable')
+title('Magnification Scale')
 
 
 subplot(1,4,4)
