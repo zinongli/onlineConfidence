@@ -5,7 +5,7 @@ cd('C:\Users\labadmin\Documents\onlineConfExperiment');
 subj = 'pilot';  
 dateTime = clock;                %get  s time for seed  
 rng(sum(100*dateTime) );
-expName = 'practice_traj';
+expName = 'practice';
 session = 01;
 redoCalib = 0;
 
@@ -31,26 +31,29 @@ topBuff = [0 0 displayInfo.screenXpixels displayInfo.screenAdj/2]; %black bar at
 bottomBuff = [0 displayInfo.screenYpixels-displayInfo.screenAdj/2 displayInfo.screenXpixels displayInfo.screenYpixels]; %black bar at bottom of screen
 
 %% Task Parameters
-
 dists_n = 3;
-UniRandRadius = 50;
+proj2tablet = 1.886;
+pixellength = 0.248;
+proj2mm = proj2tablet .* pixellength;
+UniRandRadius = 70 .* proj2mm;
 edgesize = 50;
-hitrates = [0.3;0.4;0.5;0.6;0.7];
+sizes_n = 6;
+WindowWidth = 1024; % projector window width
+yCenter = 384; % projector screen y center
+rep = 10;
+totalTime = 3;
+block_n = 6;
 
-rep = 2;
-distances = linspace(edgesize,displayInfo.windowRect(3)-edgesize,dists_n+2)-edgesize;
-distances = repmat(distances(2:end-1),1,length(hitrates)*rep);
-scorebar_length = 200;
-penalty = 0.8;
+distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
+distances = repmat(distances(2:end-1),1,sizes_n*rep) .* proj2mm;
 
-mmsigma = [15]; % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! needs to be extraced from previous data
-target_sizes = tSizeGen(mmsigma,hitrates,pixellength);
+% size granularity TBD, 5:10:55 for now
+target_sizes = (5:10:55) ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';
 target_sizes = target_sizes(:)';
-switch_scale = 1.5;
-lifespan = [2,1];
-gap_n = length(lifespan);
+
+lifespan = repmat(totalTime,1,block_n);
 %% Trial
 speedthreshold = 10; % pixel per second, equals to 2.48 mm/s
 data = [];
@@ -76,7 +79,7 @@ while true
     end
 end
 
-for j = 1:gap_n
+for j = 1:block_n
     seeds = [randperm(size(distances,2)), randperm(size(distances,2))];
     randdists = distances(seeds);
     randdists = randdists(:);
@@ -129,8 +132,8 @@ for j = 1:gap_n
                     [offset(1),offset(2)] = pol2cart(theta,rho);
                     params(i,1:2) = startpos + offset;
                 end
-                params(i,10) = randsizes(i);
-                switch_size = switch_scale * params(i,10);
+%                 params(i,10) = randsizes(i);
+%                 switch_size = switch_scale * params(i,10);
                 Screen('DrawDots', displayInfo.window, startpos, start_size, [1 1 1],[],1);
                 [xy(1), xy(2)]  = transformPointsForward(tform,x,y);
                 Screen('DrawDots', displayInfo.window, xy, 5, [1 0 0],[],1);
@@ -207,7 +210,8 @@ for j = 1:gap_n
                             params(i,4) = onset_t;
                             onset_recorded = 1;
                         end
-                        [keyIsDown,~,keyCode] = KbCheck;
+%                         [keyIsDown,~,keyCode] = KbCheck;  % for detecting
+%                         keystroke switch
                         
                         if (locdiff <= speedthreshold/framerate && ~mode) || (buttons(1) && mode)
                             if norm(xy - startpos) < randdists(i)/2
@@ -277,15 +281,15 @@ for j = 1:gap_n
         end
     end
     data = [data;params];
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_rawtotal.mat'],'data');
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_rawtotal.mat'],'data');
     xTrajTelomere = NaN(size(trax,1),size(traXtotal,2));
     xTrajTelomere(1:size(trax,1),1:size(trax,2)) = trax;
     traXtotal = [traXtotal;xTrajTelomere];
     yTrajTelomere = NaN(size(tray,1),size(traYtotal,2));
     yTrajTelomere(1:size(tray,1),1:size(tray,2)) = tray;
     traYtotal = [traYtotal;yTrajTelomere];
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_traXtotal.mat'],'traXtotal')
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_traYtotal.mat'],'traYtotal')
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_traXtotal.mat'],'traXtotal')
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_traYtotal.mat'],'traYtotal')
     while true
         DrawFormattedText(displayInfo.window,'Block finished. Press any key to proceed to next block.','center','center', displayInfo.whiteVal); % not sure how to get this centered yet
         Screen('Flip', displayInfo.window);
@@ -296,54 +300,3 @@ for j = 1:gap_n
 end
 Screen('CloseAll');
 ShowCursor;
-%%
-index = NaN(length(data),1);
-for i = 1:length(data)
-    index(i) = ~isnan(sum(data(i,:)));
-end
-valid = data(index==true,:);
-validTraX = traXtotal(index==true,:);
-validTraY = traYtotal(index==true,:);
-%%
-pixellength = 0.248;
-copy = valid;
-copy(:,[1,2]) = transformPointsInverse(tform,copy(:,[1,2]));
-copy(:,[8,9]) = transformPointsInverse(tform,copy(:,[8,9]));
-copy(:,10) = sqrt(sum((copy(:,1:2) - copy(:,8:9)).^2,2)) .* pixellength;
-copy(:,[11,12]) = [copy(:,1)*pixellength (1080 - copy(:,2))*pixellength];
-copy(:,[13,14]) = [copy(:,6)*pixellength (1080 - copy(:,7))*pixellength]; % 1080 = tablet pixel height
-copy(:,15) = valid(:,10) .* pixellength;
-copy(:,16) = copy(:,5) - copy(:,4);
-copy(:,17) = sqrt( (copy(:,13)-copy(:,11)).^2 + (copy(:,14)-copy(:,12)).^2 );
-copy(:,27) = 1:length(copy);
-copy(:,19:20) = (copy(:,6:7) - copy(:,8:9)) .* pixellength;
-copy(:,21) = sqrt(sum((copy(:,6:7) - copy(:,8:9)).^2,2)) .* pixellength;
-copy(:,22) = copy(:,21) ./ copy(:,16);
-copy(:,[24,25]) = (copy(:,1:2) - copy(:,8:9)) .* pixellength;% relative target coordinate
-copy(:,23) = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,24:25),2)) - 1) .*copy(:,10);
-copy(:,26) = valid(:,11);
-copy(:,28) = copy(:,26) ~= 0;
-%%
-save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_trialdata.mat'],'copy')
-%%
-% copy column contents:
-% 1,2: target x and y in wac pixels 
-% 3: switch time, 0 means no switch made
-% 4,5: the onset and end time of the reach
-% 6,7: endpoint x and y in wac pixels
-% 8,9: start position in wac pixels
-% 10: target distance in mm
-% 11,12: target x and y in mm
-% 13,14: endpoint x and y in mm
-% 15: target size in mm
-% 16: actual duration of the reach
-% 17: error size in mm
-% 18: switch logical array
-% 19,20: start position in mm
-% 21: actual reach distance
-% 22: average speed
-% 23: error along the reach direction (vector projection) in mm
-% 24,25: relative target position in mm
-% 26: score
-% 27: trial order
-% 28: hit or not

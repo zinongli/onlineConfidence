@@ -1,11 +1,11 @@
 % clear all
-Screen('Preference', 'SkipSyncTests', 1); 
+Screen('Preference', 'SkipSyncTests', 1);
 cd('C:\Users\labadmin\Documents\ZinongGitHub\onlineConfidence');
 
-subj = 'ZL';  
-dateTime = clock;                %get  s time for seed  
+subj = 'pilot';
+dateTime = clock;                %get  s time for seed
 rng(sum(100*dateTime) );
-expName = 'CustomeScale';
+expName = 'Switch';
 session = 01;
 redoCalib = 0;
 
@@ -15,14 +15,14 @@ redoCalib = 0;
 if exist(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_tform.mat']) && redoCalib == 0
     load(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_tform.mat']) %load calibration incase of restart
     load(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_calibration.mat'])
-    
+
 else
     [tform, calibration,startPhase] = penCalib(displayInfo);
     save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_tform.mat'],'tform')
     save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_calibration.mat'],'calibration')
 end
 
-load(['data_onlineConf\' subj '\' subj '_alt_scale.mat'])
+save(['data_onlineConf\' subj '\' subj '_SAparams.mat'],SAparams);
 mode = 0; % lift = 1, slide = 0
 %%
 start_size = 20;
@@ -33,45 +33,49 @@ Affine2d =tform.T(1:2,1:2);
 proj2tablet = 1./mean([s(1,1),s(2,2)]);
 wait = 1;
 patience = 0.5;
+speedRange = [100,2000]; % arbitary
 topBuff = [0 0 displayInfo.screenXpixels displayInfo.screenAdj/2]; %black bar at top of screen
 bottomBuff = [0 displayInfo.screenYpixels-displayInfo.screenAdj/2 displayInfo.screenXpixels displayInfo.screenYpixels]; %black bar at bottom of screen
 
 %% Task Parameters
-
 dists_n = 3;
-UniRandRadius = 70;
+proj2mm = proj2tablet .* pixellength;
+UniRandRadius = 70 .* proj2mm;
 edgesize = 50;
 sizes_n = 6;
-
-rep = 2;
-distances = linspace(edgesize,1024-edgesize,dists_n+2)-edgesize;
-distances = repmat(distances(2:end-1),1,sizes_n*rep);
-scorebar_length = 200;
+WindowWidth = 1024; % projector window width
+yCenter = 384; % projector screen y center
+rep = 10;
+totalTime = 3;
+maxScore = 10;
 penalty = 0.8;
+block_n = 6;
 
-% mmsigma = [15]; % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! needs to be extraced from previous data
-% target_sizes = tSizeGen(mmsigma,hitrates,pixellength);
-target_sizes = [5,10,15,20,25,30] ./ pixellength ./ proj2tablet;
+distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
+distances = repmat(distances(2:end-1),1,sizes_n*rep) .* proj2mm;
+
+% size granularity TBD, 5:10:55 for now
+target_sizes = (5:5:30) ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';
 target_sizes = target_sizes(:)';
-switch_scale = 1.5;
-lifespan = [3,3,3,3,3,3];
-gap_n = length(lifespan);
+
+lifespan = repmat(totalTime,1,block_n);
 %% Trial
 speedthreshold = 10; % pixel per second, equals to 2.48 mm/s
 data = [];
 traXtotal = [];
 traYtotal = [];
+
 testtimes = zeros(1,10000); % 10 seconds
 framerate = Screen('NominalFrameRate',displayInfo.window);
 frames = framerate * 5; % start/preparing page time out at 5 seconds
 instruct = 'Good luck, try hard, and have fun!';
 HideCursor;
 Screen('FillRect', displayInfo.window, displayInfo.blackVal);
- 
+
 while true
-    DrawFormattedText(displayInfo.window,instruct,'center','center', displayInfo.whiteVal); 
+    DrawFormattedText(displayInfo.window,instruct,'center','center', displayInfo.whiteVal);
     Screen('Flip', displayInfo.window);
     [~,~,b] = GetMouse;
     if b(1)
@@ -123,7 +127,8 @@ for j = 1:gap_n
                     break
                 end
                 [x,y,buttons] = GetMouse(displayInfo.window2);
-                if rem(i,2)
+                Left = rem(i,2);
+                if Left
                     startpos = [displayInfo.windowRect(3)-edgesize,displayInfo.yCenter];
                     theta = -pi/12 + (pi/6) * rand(1);
                     rho = randdists(i)-UniRandRadius + UniRandRadius * 2 * rand(1);
@@ -136,16 +141,28 @@ for j = 1:gap_n
                     [offset(1),offset(2)] = pol2cart(theta,rho);
                     params(i,1:2) = startpos + offset;
                 end
+                UniLatParams = SAparams(:,Left+1);
+                UniLatParams = [UniLatParams(1:2:11,:),UniLatParams(2:2:12,:)];
                 params(i,10) = randsizes(i);
-                physicalRho = rho * pixellength * proj2tablet;
-                physicalSize = params(i,10) * pixellength * proj2tablet;
-                distanceLookUpI = round(physicalRho/10)-7;
-                targetLookUpI = round(physicalSize/0.1) - 19;
-                switch_scale = alt_scale(targetLookUpI,distanceLookUpI);
-                if isnan(switch_scale)
-                    switch_scale = 5;
+
+                optS_1 = findOptSpeed8(norm(offset),randsizes(i),totalTime,speedRange,SAparams,Left);
+                time1 = norm(offset)/(UniLatParams(5,1) * optS_1 + UniLatParams(5,2));
+                remainTime1 = totalTime - time1;
+                remainScore = (remainTime1/totalTime)*maxScore;
+                xyBiasError1 = optS_1 .* UniLatParams(:,1) + UniLatParams(:,2);
+                reg_phit1 = compute_phit0(randsizes(i), xyBiasError1);
+                eGainReg1 = remainScore * reg_phit1;
+                alt_phit1 = eGainReg1 * totalTime / ((totalTime - time1 - penalty) * maxScore);
+                % alt_phit is the alternative probability required for switching to be beneficial
+                if alt_phit1 > 0.99 || alt_phit1 <= 0% impossible for a profitable alternative as switch
+                    bigcirc = 0;
+                    alt_scale1 = 2; % aribitary
+                else
+                    % big target size generation based on model 1 speed
+                    fun = @(x) abs(compute_phit0(x,xyBiasError1) - alt_phit1);
+                    x0 = randsizes(i);
+                    bigcirc = fmincon(fun,x0,[],[],[],[],5,80); % size of the big and hollow target
                 end
-                switch_size = switch_scale * params(i,10);
                 Screen('DrawDots', displayInfo.window, startpos, start_size, [1 1 1],[],1);
                 [xy(1), xy(2)]  = transformPointsForward(tform,x,y);
                 Screen('DrawDots', displayInfo.window, xy, 5, [1 0 0],[],1);
@@ -177,29 +194,29 @@ for j = 1:gap_n
             switch_time = 0;
             [x,y,~] = GetMouse(displayInfo.window2);
             tSize = params(i,10);
-            for frame = 1: framerate * (story(3)+2) 
+            for frame = 1: framerate * (story(3)+2)
                 cache = [x,y];
                 [x, y, buttons] = GetMouse(displayInfo.window2);
                 locdiff = sqrt(sum((cache - [x,y]).^2));
                 trax(i,frame) = x;
                 tray(i,frame) = y;
                 [xy(1), xy(2)]  = transformPointsForward(tform,x,y);
-                
+
                 if frame <= framerate * (story(3)+2)
                     Screen('DrawDots', displayInfo.window, startpos, start_size, [1 1 1],[],1);
                     if frame >= framerate * story(1)
                         percent_score = max(1-((frame ./ framerate)-story(1)) / lifespan(j),0);
                         Screen('DrawDots',displayInfo.window, params(i,1:2), tSize,[0 1 0],[],1);
-                        Screen('FrameOval',displayInfo.window, [1 1 0], [params(i,1)-switch_size./2,params(i,2)-switch_size./2,params(i,1)+switch_size./2,params(i,2)+switch_size./2]);
+                        Screen('FrameOval',displayInfo.window, [1 1 0], [params(i,1)-bigcirc./2,params(i,2)-bigcirc./2,params(i,1)+bigcirc./2,params(i,2)+bigcirc./2]);
                         Screen('DrawLine', displayInfo.window, [1 1 1], displayInfo.xCenter - percent_score * scorebar_length,displayInfo.yCenter-200, displayInfo.xCenter + percent_score * scorebar_length,displayInfo.yCenter-200,5);
                         DrawFormattedText(displayInfo.window,['Score = ' num2str(percent_score * 10)],'center',displayInfo.yCenter-220, displayInfo.whiteVal);
                     end
                     Screen('Flip', displayInfo.window);
-                    if frame > framerate * story(3) 
+                    if frame > framerate * story(3)
                         DrawFormattedText(displayInfo.window,'Too Slow!','center','center', displayInfo.whiteVal); % not sure how to get this centered yet
                         Screen('Flip',displayInfo.window);
                         trials(i) = 1;
-                        params(i,4) = NaN; 
+                        params(i,4) = NaN;
                         pause(1)
                         break
                     end
@@ -209,7 +226,7 @@ for j = 1:gap_n
                             Screen('Flip', displayInfo.window);
                             trials(i) = 1;
                             pause(1)
-                            break   
+                            break
                         end
                         if frame < framerate * story(1)
                             DrawFormattedText(displayInfo.window,'Too Early!','center','center', displayInfo.whiteVal); % not sure how to get this centered yet
@@ -219,7 +236,7 @@ for j = 1:gap_n
                             break
                         elseif ~onset_recorded
                             onset_t = frame / framerate;
-%                             abs_onset_time = GetSecs;
+                            %                             abs_onset_time = GetSecs;
                             params(i,4) = onset_t;
                             onset_recorded = 1;
                         end
@@ -227,14 +244,14 @@ for j = 1:gap_n
                         if ismember(161,find(keyCode))
                             switch_time = frame / framerate;
                             switch_recorded = 1;
-                            tSize = switch_size;
+                            tSize = bigcirc;
                         end
                         if (locdiff <= speedthreshold/framerate && ~mode) || (buttons(1) && mode)
                             if norm(xy - startpos) < randdists(i)/2
                                 DrawFormattedText(displayInfo.window,'Not Even Close :(','center','center', displayInfo.whiteVal);
                                 Screen('Flip', displayInfo.window);
                                 trials(i) = 1;
-                                pause(1)  
+                                pause(1)
                             else
                                 end_t = frame / framerate;
                                 endpos = [x y];
@@ -249,7 +266,7 @@ for j = 1:gap_n
                                     bar_color = [1 1 0];
                                     for k = 1:framerate * penalty
                                         percent_score = max(1-(((frame+k) ./ framerate)-story(1)) / lifespan(j),0);
-                                        Screen('DrawDots',displayInfo.window, params(i,1:2), switch_size,[0 1 0],[],1);
+                                        Screen('DrawDots',displayInfo.window, params(i,1:2), bigcirc,[0 1 0],[],1);
                                         Screen('DrawDots', displayInfo.window, xy, 5, [1 0 0],[],1);
                                         Screen('DrawLine', displayInfo.window, bar_color, displayInfo.xCenter - percent_score * scorebar_length,displayInfo.yCenter-200, displayInfo.xCenter + percent_score * scorebar_length,displayInfo.yCenter-200,5);
                                         DrawFormattedText(displayInfo.window,['Score = ' num2str(percent_score * 10)],'center',displayInfo.yCenter-220, displayInfo.whiteVal);
@@ -259,7 +276,7 @@ for j = 1:gap_n
                                     score = percent_score * 10 * hit;
                                 else
                                     Screen('DrawDots',displayInfo.window, params(i,1:2), tSize,[0 1 0],[],1);
-                                    Screen('FrameOval',displayInfo.window, [1 1 0], [params(i,1)-switch_size./2,params(i,2)-switch_size./2,params(i,1)+switch_size./2,params(i,2)+switch_size./2]);
+                                    Screen('FrameOval',displayInfo.window, [1 1 0], [params(i,1)-bigcirc./2,params(i,2)-bigcirc./2,params(i,1)+bigcirc./2,params(i,2)+bigcirc./2]);
                                     Screen('DrawDots', displayInfo.window, xy, 5, [1 0 0],[],1);
                                     Screen('DrawLine', displayInfo.window, bar_color, displayInfo.xCenter - percent_score * scorebar_length,displayInfo.yCenter-200, displayInfo.xCenter + percent_score * scorebar_length,displayInfo.yCenter-200,5);
                                     if hit
@@ -279,14 +296,15 @@ for j = 1:gap_n
                                 params(i,8:9) = startpos;
                                 params(i,10) = randsizes(i);
                                 params(i,11) = score;
+                                params(i,12) = bircirc;
                                 trials(i) = 0;
                             end
                             break
-                        end                            
+                        end
                     end
                 end
-%                 testtimes(t) = GetSecs; % for testing temporal resolution
-%                 t = t+1;
+                %                 testtimes(t) = GetSecs; % for testing temporal resolution
+                %                 t = t+1;
                 [~,~,keyCode] = KbCheck;
                 if find(keyCode) == 27 % KbName(27) = 'ESCAPE'
                     Screen('CloseAll');
@@ -297,15 +315,15 @@ for j = 1:gap_n
         end
     end
     data = [data;params];
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_rawtotal.mat'],'data');
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_rawtotal.mat'],'data');
     xTrajTelomere = NaN(size(trax,1),size(traXtotal,2));
     xTrajTelomere(1:size(trax,1),1:size(trax,2)) = trax;
     traXtotal = [traXtotal;xTrajTelomere];
     yTrajTelomere = NaN(size(tray,1),size(traYtotal,2));
     yTrajTelomere(1:size(tray,1),1:size(tray,2)) = tray;
     traYtotal = [traYtotal;yTrajTelomere];
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_traXtotal.mat'],'traXtotal')
-    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) 'c_' date,'_traYtotal.mat'],'traYtotal')
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_traXtotal.mat'],'traXtotal')
+    save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_traYtotal.mat'],'traYtotal')
     while true
         DrawFormattedText(displayInfo.window,'Block finished. Press any key to proceed to next block.','center','center', displayInfo.whiteVal); % not sure how to get this centered yet
         Screen('Flip', displayInfo.window);
@@ -325,14 +343,13 @@ valid = data(index==true,:);
 validTraX = traXtotal(index==true,:);
 validTraY = traYtotal(index==true,:);
 %%
-pixellength = 0.248;
 copy = valid;
 copy(:,[1,2]) = transformPointsInverse(tform,copy(:,[1,2]));
 copy(:,[8,9]) = transformPointsInverse(tform,copy(:,[8,9]));
 copy(:,10) = sqrt(sum((copy(:,1:2) - copy(:,8:9)).^2,2)) .* pixellength;
 copy(:,[11,12]) = [copy(:,1)*pixellength (1080 - copy(:,2))*pixellength];
 copy(:,[13,14]) = [copy(:,6)*pixellength (1080 - copy(:,7))*pixellength]; % 1080 = tablet pixel height
-copy(:,15) = valid(:,10) .* pixellength .* 1.8919 ./ 2; % 1.8919 = projetor size to tablet size (physical size), /2 is diameter vs radius
+copy(:,15) = valid(:,10) .* pixellength .* proj2tablet ./ 2; % proj2tablet = projetor size to tablet size (physical size), /2 is diameter vs radius
 copy(:,16) = copy(:,5) - copy(:,4);
 copy(:,17) = sqrt( (copy(:,13)-copy(:,11)).^2 + (copy(:,14)-copy(:,12)).^2 );
 copy(:,27) = 1:length(copy);
@@ -348,11 +365,13 @@ projScale = (abs(dot(copy(:,19:20),copy(:,24:25),2) ./ dot(copy(:,24:25),copy(:,
 rejections = endPoints - projScale.* copy(:,24:25);
 rejLength = sqrt(rejections(:,1).^2 + rejections(:,2).^2);
 copy(:,29) = rejLength;
+copy(:,30) = valid(:,12) .* pixellength .* proj2tablet ./ 2; % proj2tablet = projetor size to tablet size (physical size), /2 is diameter vs radius
+
 %%
-save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_trialdata.mat'],'copy')
+save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' date,'_cleanData.mat'],'copy')
 %%
 % copy column contents:
-% 1,2: target x and y in wac pixels 
+% 1,2: target x and y in wac pixels
 % 3: switch time, 0 means no switch made
 % 4,5: the onset and end time of the reach
 % 6,7: endpoint x and y in wac pixels
@@ -369,6 +388,8 @@ save(['data_onlineConf\' subj '\' subj '_' expName '_S' num2str(session) '_' dat
 % 22: average speed
 % 23: error along the reach direction (vector projection) in mm
 % 24,25: relative target position in mm
-% 26: score
+% 26: big target size
 % 27: trial order
 % 28: hit or not
+% 29: error orthogonal to the reach direction (vector rejection) in mm
+% 30: big target size
