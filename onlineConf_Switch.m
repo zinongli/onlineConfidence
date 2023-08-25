@@ -47,14 +47,12 @@ WindowWidth = 1024; % projector window width
 yCenter = 384; % projector screen y center
 rep = 10;
 totalTime = 3;
-maxScore = 10;
-penalty = 0.8;
 block_n = 6;
 
 distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
 distances = repmat(distances(2:end-1),1,sizes_n*rep) .* proj2mm;
 
-% size granularity TBD, 5:10:55 for now
+% size granularity TBD, 5:10:55 mm for now
 target_sizes = (5:5:30) ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';

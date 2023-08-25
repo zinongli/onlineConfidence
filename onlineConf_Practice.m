@@ -25,6 +25,9 @@ mode = 0; % lift = 1, slide = 0
 start_size = 20;
 cursor_size = 5;
 pixellength = 0.248;
+Affine2d =tform.T(1:2,1:2);
+[~,s,~] = svd(Affine2d);
+proj2tablet = 1./mean([s(1,1),s(2,2)]);
 wait = 1;
 patience = 0.5;
 topBuff = [0 0 displayInfo.screenXpixels displayInfo.screenAdj/2]; %black bar at top of screen
@@ -32,8 +35,6 @@ bottomBuff = [0 displayInfo.screenYpixels-displayInfo.screenAdj/2 displayInfo.sc
 
 %% Task Parameters
 dists_n = 3;
-proj2tablet = 1.886;
-pixellength = 0.248;
 proj2mm = proj2tablet .* pixellength;
 UniRandRadius = 70 .* proj2mm;
 edgesize = 50;
@@ -47,7 +48,7 @@ block_n = 6;
 distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
 distances = repmat(distances(2:end-1),1,sizes_n*rep) .* proj2mm;
 
-% size granularity TBD, 5:10:55 for now
+% size granularity TBD, 5:10:55 mm for now
 target_sizes = (5:10:55) ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';
