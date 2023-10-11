@@ -19,7 +19,7 @@ distances = linspace(edgesize,WindowWidth-edgesize,dists_n+2)-edgesize;
 distances = repmat(distances(2:end-1),1,sizes_n*rep) .* proj2mm;
 
 
-target_sizes = [5,10,15,20,25,30] ./ pixellength ./ proj2tablet;
+target_sizes = [5:10:55] ./ pixellength ./ proj2tablet;
 target_sizes = repmat(target_sizes,1,dists_n*rep);
 target_sizes = target_sizes';
 target_sizes = target_sizes(:)';

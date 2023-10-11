@@ -149,7 +149,8 @@ colorbar('Ticks',0:0.2:1,'TickLabels',cBarTickLabels,'Location','west');
 title('Speed (mm/s)                     ','FontWeight','bold');
 axis off
 sgtitle('Endpoint Errors')
-
+axis equal
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure(2)
 indices = 1:1600;
@@ -295,6 +296,7 @@ sgtitle('Endpoint Error Along the Reach Direction')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure(3)
+
 indices = 1:1600;
 subplot(2,3,1)
 theme_color = [0 0.4470 0.7410];

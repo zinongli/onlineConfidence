@@ -3,7 +3,7 @@ Screen('Preference', 'SkipSyncTests', 1);
 cd('C:\Users\labadmin\Documents\onlineConfExperiment');
 
 subj = 'pilot';  
-dateTime = clock;                %get  s time for seed  
+dateTime = clock;                %gets time for seed  
 rng(sum(100*dateTime) );
 expName = 'practice';
 session = 01;
